@@ -18,13 +18,13 @@ df_land_only = df[df["種類"] == "宅地(土地)"]
 
 # ===== 保存 =====
 df_land_building.to_csv(
-    OUT_DIR / "merged_land_and_building.csv",
+    OUT_DIR / "01_LandOnlyAndLandAndBuilding/merged_land_and_building.csv",
     index=False,
     encoding="utf-8-sig"
 )
 
 df_land_only.to_csv(
-    OUT_DIR / "merged_land_only.csv",
+    OUT_DIR / "01_LandOnlyAndLandAndBuilding/merged_land_only.csv",
     index=False,
     encoding="utf-8-sig"
 )

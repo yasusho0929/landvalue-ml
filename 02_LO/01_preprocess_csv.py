@@ -25,7 +25,8 @@ import pandas as pd
 BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
 OUT_DIR = BASE_DIR / "out"
 
-CSV_PATH = OUT_DIR / "testL.csv"
+CSV_PATH = OUT_DIR / "01_LandOnlyAndLandAndBuilding/merged_land_only.csv",
+    index=False,.csv"
 TARGET_COL = "取引価格（総額）"  # VALUE に入れる元
 
 
