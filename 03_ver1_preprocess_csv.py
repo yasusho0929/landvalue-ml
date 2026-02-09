@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+このスクリプトは、指定CSV（相対パス時はout配下優先）を前処理し、処理後CSVを保存します。
+
 preprocess_csv.py
 指定したCSVを前処理して、同じフォルダに別名で保存するスクリプト。
 
@@ -21,6 +23,8 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
+BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+OUT_DIR = BASE_DIR / "out"
 
 # ====== CSVの列名に合わせて調整する場所 ======
 COL_BUILD_YEAR = "建築年"
@@ -161,6 +165,11 @@ def main() -> None:
     args = ap.parse_args()
 
     in_path = Path(args.input_csv)
+    if not in_path.is_absolute() and not in_path.exists():
+        candidate = OUT_DIR / in_path
+        if candidate.exists():
+            in_path = candidate
+
     if not in_path.exists():
         raise FileNotFoundError(f"入力CSVが見つかりません: {in_path}")
 

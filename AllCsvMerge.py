@@ -1,3 +1,5 @@
+"""このスクリプトは、指定フォルダ（必要に応じてout）内のCSVを結合し、マージCSVを出力します。"""
+
 import argparse
 import glob
 import os

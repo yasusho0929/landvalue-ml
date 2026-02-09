@@ -1,9 +1,16 @@
+"""このスクリプトは、out配下の元データCSVを前処理し、学習用CSVをout配下へ出力します。"""
+
+from pathlib import Path
+
 import pandas as pd
 import re
 
+BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+OUT_DIR = BASE_DIR / "out"
+
 # ===== 設定 =====
-INPUT_CSV = "testL.csv"
-OUTPUT_CSV = "merged_all_processed.csv"
+INPUT_CSV = OUT_DIR / "testL.csv"
+OUTPUT_CSV = OUT_DIR / "merged_all_processed.csv"
 
 
 

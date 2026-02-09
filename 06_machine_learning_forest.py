@@ -1,3 +1,10 @@
+"""このスクリプトは、out配下の学習用CSVでランダムフォレスト回帰を実行し、予測結果CSVをout配下へ保存します。"""
+
+from pathlib import Path
+
+BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+OUT_DIR = BASE_DIR / "out"
+
 import pandas as pd
 import numpy as np
 
@@ -11,9 +18,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 def main():
     # ====== 設定 ======
-    CSV_PATH = "testL_processed2.csv"   # 必要ならパスを変更
+    CSV_PATH = OUT_DIR / "testL_processed2.csv"
     TARGET = "PRICE_PER_TSUBO"
-    OUTPUT_PATH = "testL_processed_forest_result.csv"
+    OUTPUT_PATH = OUT_DIR / "testL_processed_forest_result.csv"
 
     TEST_SIZE = 0.2
     RANDOM_STATE = 42

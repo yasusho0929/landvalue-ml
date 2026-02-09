@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+このスクリプトは、out配下の元データCSVを機械学習用に整形し、前処理済みCSVをout配下へ保存します。
+
 preprocess_template.py (customized)
 
 要件反映:
@@ -20,7 +22,10 @@ import numpy as np
 import pandas as pd
 
 
-CSV_PATH = Path("testL.csv")
+BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+OUT_DIR = BASE_DIR / "out"
+
+CSV_PATH = OUT_DIR / "testL.csv"
 TARGET_COL = "取引価格（総額）"  # VALUE に入れる元
 
 
