@@ -22,8 +22,10 @@ import numpy as np
 import pandas as pd
 
 
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+PROJECT_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+BASE_DIR = PROJECT_DIR / "02_LandOnly"
 OUT_DIR = BASE_DIR / "out"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 CSV_PATH = OUT_DIR / "testL.csv"
 TARGET_COL = "取引価格（総額）"  # VALUE に入れる元

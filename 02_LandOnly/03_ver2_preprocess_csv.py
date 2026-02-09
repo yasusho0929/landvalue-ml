@@ -5,8 +5,10 @@ from pathlib import Path
 import pandas as pd
 import re
 
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+PROJECT_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+BASE_DIR = PROJECT_DIR / "02_LandOnly"
 OUT_DIR = BASE_DIR / "out"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ===== 設定 =====
 INPUT_CSV = OUT_DIR / "testL.csv"

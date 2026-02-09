@@ -23,8 +23,10 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+PROJECT_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
+BASE_DIR = PROJECT_DIR / "02_LandOnly"
 OUT_DIR = BASE_DIR / "out"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ====== CSVの列名に合わせて調整する場所 ======
 COL_BUILD_YEAR = "建築年"
