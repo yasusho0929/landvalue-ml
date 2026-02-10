@@ -21,6 +21,7 @@
 
 from pathlib import Path
 import json
+import time
 import pandas as pd
 import numpy as np
 import joblib
@@ -174,7 +175,11 @@ def main():
         print(f"[INFO] 学習時カラム情報を保存しました: {columns_path}")
 
     # 評価
+    print("[INFO] テストデータの予測を開始します...")
+    t0 = time.perf_counter()
     y_pred = pipe.predict(X_test)
+    print(f"[INFO] テストデータ予測が完了しました（{time.perf_counter() - t0:.1f}秒）")
+
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
@@ -182,11 +187,18 @@ def main():
     print(f"R2 : {r2:.3f}")
 
     # SHAP（RandomForest + 前処理済み特徴量）
+    print("[INFO] SHAP前処理（特徴量変換）を開始します...")
+    t0 = time.perf_counter()
     X_test_transformed = pipe.named_steps["preprocess"].transform(X_test)
     feature_names = pipe.named_steps["preprocess"].get_feature_names_out()
+    print(f"[INFO] SHAP前処理が完了しました（{time.perf_counter() - t0:.1f}秒）")
 
+    print("[INFO] SHAP値の計算を開始します（時間がかかる場合があります）...")
+    t0 = time.perf_counter()
     shap_explainer = shap.TreeExplainer(pipe.named_steps["model"])
     shap_values = shap_explainer.shap_values(X_test_transformed)
+    print(f"[INFO] SHAP値の計算が完了しました（{time.perf_counter() - t0:.1f}秒）")
+
     shap_importance = np.abs(shap_values).mean(axis=0)
     top_idx = np.argsort(shap_importance)[::-1][:10]
 
@@ -197,7 +209,10 @@ def main():
     # ==========================
     # 全行予測 → 列追加 → 出力
     # ==========================
+    print("[INFO] 全行データの予測を開始します...")
+    t0 = time.perf_counter()
     pred_all = pipe.predict(X)
+    print(f"[INFO] 全行データの予測が完了しました（{time.perf_counter() - t0:.1f}秒）")
 
     df_out = df.copy()
     df_out["PRED_PRICE_PER_TSUBO"] = pred_all
@@ -208,7 +223,10 @@ def main():
     df_out["DIFF_RATE"] = (df_out["PRED_PRICE_PER_TSUBO"] - df_out[TARGET]) / denom
 
     # CSV出力
+    print("[INFO] CSV出力を開始します...")
+    t0 = time.perf_counter()
     df_out.to_csv(OUTPUT_PATH, index=False, encoding="utf-8-sig")
+    print(f"[INFO] CSV出力が完了しました（{time.perf_counter() - t0:.1f}秒）")
     print(f"\nSaved: {OUTPUT_PATH}")
 
     # 先頭確認
