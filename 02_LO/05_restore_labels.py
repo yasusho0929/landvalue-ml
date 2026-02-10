@@ -11,8 +11,8 @@ ROOT_DIR = SCRIPT_DIR.parent
 # =========================
 # 入出力ファイル
 # =========================
-INPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result.csv"
-OUTPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result_labeled.csv"
+INPUT_CSV = SCRIPT_DIR / "testLO_processed_forest_result.csv"
+OUTPUT_CSV = SCRIPT_DIR / "testLO_processed_forest_result_labeled.csv"
 
 PATHS = {
     "district": ROOT_DIR / "appendix/地区名別_坪単価平均.csv",
