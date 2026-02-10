@@ -1,15 +1,15 @@
 """このスクリプトは、out配下の前処理CSVを追加加工し、学習用特徴量CSVをout配下へ保存します。"""
 
+
 from pathlib import Path
-
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
-OUT_DIR = BASE_DIR / "out"
-
 import pandas as pd
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent
+
 # 入力ファイル
-input_path = OUT_DIR / "testL_processed.csv"
-output_path = OUT_DIR / "testL_processed2.csv"
+input_path = SCRIPT_DIR / "testL_processed.csv"
+output_path = SCRIPT_DIR / "testL_processed2.csv"
 
 # CSV読み込み（文字化け対策：utf-8-sig）
 df = pd.read_csv(input_path, encoding="utf-8-sig")
@@ -79,7 +79,7 @@ df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
 # =========================
 
 # ① 最寄駅：名称 → 利用者数
-station_df = pd.read_csv(OUT_DIR / "駅の利用者.csv", encoding="utf-8-sig")
+station_df = pd.read_csv(ROOT_DIR / "appendix/駅の利用者.csv", encoding="utf-8-sig")
 
 # 想定カラム例：
 # 駅名, 利用者数
@@ -92,7 +92,7 @@ df["NEAREST_STATION"] = df["NEAREST_STATION"].map(station_map)
 
 
 # ② 前面道路：種類 → 坪単価平均
-road_type_df = pd.read_csv(OUT_DIR / "前面道路種類別_坪単価平均.csv", encoding="utf-8-sig")
+road_type_df = pd.read_csv(ROOT_DIR / "appendix/前面道路種類別_坪単価平均.csv", encoding="utf-8-sig")
 
 # 想定カラム例：
 # 前面道路：種類, 坪単価平均
@@ -105,7 +105,7 @@ df["ROAD_TYPE"] = df["ROAD_TYPE"].map(road_type_map)
 
 
 # ③ 地区名 → 坪単価平均
-district_df = pd.read_csv(OUT_DIR / "地区名別_坪単価平均.csv", encoding="utf-8-sig")
+district_df = pd.read_csv(ROOT_DIR / "appendix/地区名別_坪単価平均.csv", encoding="utf-8-sig")
 
 district_map = dict(zip(
     district_df.iloc[:, 0],
@@ -116,7 +116,7 @@ df["DISTRICT"] = df["DISTRICT"].map(district_map)
 
 
 # ④ 土地の形状 → 坪単価平均
-land_shape_df = pd.read_csv(OUT_DIR / "土地形状別_坪単価平均.csv", encoding="utf-8-sig")
+land_shape_df = pd.read_csv(ROOT_DIR / "appendix/土地形状別_坪単価平均.csv", encoding="utf-8-sig")
 
 land_shape_map = dict(zip(
     land_shape_df.iloc[:, 0],

@@ -1,9 +1,5 @@
 """このスクリプトは、out配下の前処理済みCSVを読み込み、基本統計と欠損・相関を確認します。"""
 
-from pathlib import Path
-
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
-OUT_DIR = BASE_DIR / "out"
 
 # ==============================
 # 0. import
@@ -28,7 +24,7 @@ pd.set_option("display.width", 200)
 # 1. データ読み込み
 # ==============================
 # 適宜パスを変更
-df = pd.read_csv(OUT_DIR / "merged_all_processed.csv", encoding="utf-8-sig")
+df = pd.read_csv("02_LO/merged_all_processed.csv", encoding="utf-8-sig")
 
 print("=== shape ===")
 print(df.shape)

@@ -1,24 +1,24 @@
 """このスクリプトは、out配下の予測結果CSVの符号化列を名称に復元し、ラベル付きCSVをout配下へ保存します。"""
 
+
 from pathlib import Path
-
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
-OUT_DIR = BASE_DIR / "out"
-
 import pandas as pd
 import numpy as np
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = SCRIPT_DIR.parent
 
 # =========================
 # 入出力ファイル
 # =========================
-INPUT_CSV = OUT_DIR / "testL_processed_forest_result.csv"
-OUTPUT_CSV = OUT_DIR / "testL_processed_forest_result_labeled.csv"
+INPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result.csv"
+OUTPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result_labeled.csv"
 
 PATHS = {
-    "district": OUT_DIR / "地区名別_坪単価平均.csv",
-    "station": OUT_DIR / "駅の利用者.csv",
-    "land_shape": OUT_DIR / "土地形状別_坪単価平均.csv",
-    "road_type": OUT_DIR / "前面道路種類別_坪単価平均.csv",
+    "district": ROOT_DIR / "appendix/地区名別_坪単価平均.csv",
+    "station": ROOT_DIR / "appendix/駅の利用者.csv",
+    "land_shape": ROOT_DIR / "appendix/土地形状別_坪単価平均.csv",
+    "road_type": ROOT_DIR / "appendix/前面道路種類別_坪単価平均.csv",
 }
 
 # =========================
