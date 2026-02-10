@@ -2,8 +2,11 @@
 
 
 from pathlib import Path
+import json
 import pandas as pd
 import numpy as np
+import joblib
+import shap
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
@@ -13,6 +16,25 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.ensemble import RandomForestRegressor
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+MODEL_PATH = "./models/rf_landprice.joblib"
+COLUMNS_PATH = "./models/rf_landprice_columns.json"
+
+
+def align_features(X: pd.DataFrame, saved_columns: list[str]) -> pd.DataFrame:
+    """学習時のカラム順に合わせる（不足列は0補完、余剰列は削除）。"""
+    X_aligned = X.copy()
+
+    missing_cols = [c for c in saved_columns if c not in X_aligned.columns]
+    if missing_cols:
+        print(f"[INFO] 不足カラムを0補完します: {len(missing_cols)}列")
+        for col in missing_cols:
+            X_aligned[col] = 0
+
+    extra_cols = [c for c in X_aligned.columns if c not in saved_columns]
+    if extra_cols:
+        print(f"[INFO] 余分なカラムを削除します: {len(extra_cols)}列")
+
+    return X_aligned.reindex(columns=saved_columns, fill_value=0)
 
 
 def main():
@@ -31,6 +53,9 @@ def main():
     N_JOBS = -1
     # ==================
 
+    model_path = SCRIPT_DIR / Path(MODEL_PATH)
+    columns_path = SCRIPT_DIR / Path(COLUMNS_PATH)
+
     # 読み込み
     df = pd.read_csv(CSV_PATH)
     print("Loaded:", df.shape)
@@ -42,6 +67,25 @@ def main():
     # 目的変数を数値化（念のため）
     df[TARGET] = pd.to_numeric(df[TARGET], errors="coerce")
     df = df.dropna(subset=[TARGET]).copy()
+
+    # VALUE外れ値分析・除外（IQR法）
+    if "VALUE" in df.columns:
+        df["VALUE"] = pd.to_numeric(df["VALUE"], errors="coerce")
+        value_valid = df["VALUE"].dropna()
+        if not value_valid.empty:
+            q1 = value_valid.quantile(0.25)
+            q3 = value_valid.quantile(0.75)
+            iqr = q3 - q1
+            lower = q1 - 1.5 * iqr
+            upper = q3 + 1.5 * iqr
+            outlier_mask = (df["VALUE"] < lower) | (df["VALUE"] > upper)
+            outlier_count = int(outlier_mask.sum())
+            print(
+                f"[INFO] VALUE外れ値分析(IQR): Q1={q1:.3f}, Q3={q3:.3f}, "
+                f"Lower={lower:.3f}, Upper={upper:.3f}, 除外件数={outlier_count}"
+            )
+            df = df.loc[~outlier_mask].copy()
+            print(f"[INFO] VALUE外れ値除外後のデータ件数: {df.shape[0]}")
 
     # 説明変数 / 目的変数
     DROP_COLS = ["VALUE"]  # 強リーク対策（必要なら増やす）
@@ -85,8 +129,31 @@ def main():
         X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE
     )
 
-    # 学習
-    pipe.fit(X_train, y_train)
+    # モデル読込/学習
+    columns_path.parent.mkdir(parents=True, exist_ok=True)
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if model_path.exists() and columns_path.exists():
+        print(f"[INFO] 学習済みモデルを読み込みます: {model_path}")
+        pipe = joblib.load(model_path)
+        with columns_path.open("r", encoding="utf-8") as f:
+            saved_columns = json.load(f)
+        print(f"[INFO] 学習時カラム情報を読み込みました: {columns_path}")
+
+        X_train = align_features(X_train, saved_columns)
+        X_test = align_features(X_test, saved_columns)
+        X = align_features(X, saved_columns)
+    else:
+        print("[INFO] 学習済みモデルがないため新規学習を実行します。")
+        pipe.fit(X_train, y_train)
+        saved_columns = X_train.columns.tolist()
+
+        joblib.dump(pipe, model_path)
+        with columns_path.open("w", encoding="utf-8") as f:
+            json.dump(saved_columns, f, ensure_ascii=False, indent=2)
+
+        print(f"[INFO] モデルを保存しました: {model_path}")
+        print(f"[INFO] 学習時カラム情報を保存しました: {columns_path}")
 
     # 評価
     y_pred = pipe.predict(X_test)
@@ -95,6 +162,19 @@ def main():
 
     print(f"MAE: {mae:,.0f} (円/坪)")
     print(f"R2 : {r2:.3f}")
+
+    # SHAP（RandomForest + 前処理済み特徴量）
+    X_test_transformed = pipe.named_steps["preprocess"].transform(X_test)
+    feature_names = pipe.named_steps["preprocess"].get_feature_names_out()
+
+    shap_explainer = shap.TreeExplainer(pipe.named_steps["model"])
+    shap_values = shap_explainer.shap_values(X_test_transformed)
+    shap_importance = np.abs(shap_values).mean(axis=0)
+    top_idx = np.argsort(shap_importance)[::-1][:10]
+
+    print("[INFO] SHAP重要度 TOP10:")
+    for rank, idx in enumerate(top_idx, start=1):
+        print(f"  {rank:>2}. {feature_names[idx]}: {shap_importance[idx]:.6f}")
 
     # ==========================
     # 全行予測 → 列追加 → 出力
