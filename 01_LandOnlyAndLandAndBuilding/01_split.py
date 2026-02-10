@@ -9,7 +9,7 @@ ROOT_DIR = SCRIPT_DIR.parent
 
 
 # ===== 読み込み =====
-df = pd.read_csv(ROOT_DIR / "test.csv", encoding="cp932")
+df = pd.read_csv(ROOT_DIR / "/workspaces/landvalue-ml/01_LandOnlyAndLandAndBuilding/GifuAndIchinomiya.csv", encoding="cp932")
 
 # 念のため正規化（全角ブレ対策）
 df["種類"] = df["種類"].astype(str).str.normalize("NFKC")

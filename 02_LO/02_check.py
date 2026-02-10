@@ -24,7 +24,7 @@ pd.set_option("display.width", 200)
 # 1. データ読み込み
 # ==============================
 # 適宜パスを変更
-df = pd.read_csv("02_LO/merged_all_processed.csv", encoding="utf-8-sig")
+df = pd.read_csv("02_LO/merged_land_only_processed.csv", encoding="utf-8-sig")
 
 print("=== shape ===")
 print(df.shape)

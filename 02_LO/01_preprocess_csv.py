@@ -23,7 +23,7 @@ import pandas as pd
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-CSV_PATH = SCRIPT_DIR / "testL.csv"
+CSV_PATH = SCRIPT_DIR / "/workspaces/landvalue-ml/01_LandOnlyAndLandAndBuilding/merged_land_only.csv"
 TARGET_COL = "取引価格（総額）"  # VALUE に入れる元
 
 
