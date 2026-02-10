@@ -1,16 +1,15 @@
 """このスクリプトは、out配下のラベル付き予測結果CSVを集計し、地区ごとの割高・割安ランキングを表示します。"""
 
+
 from pathlib import Path
-
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
-OUT_DIR = BASE_DIR / "out"
-
 import pandas as pd
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 # =========================
 # 設定
 # =========================
-INPUT_CSV = OUT_DIR / "testL_processed_forest_result_labeled.csv"
+INPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result_labeled.csv"
 MIN_COUNT = 30      # この件数未満の地区は除外
 TOP_N = 20           # 上位何件出すか
 

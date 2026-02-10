@@ -2,12 +2,9 @@
 
 import pandas as pd
 from IPython.display import display
-from pathlib import Path
 
-BASE_DIR = Path("@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master")
-OUT_DIR = BASE_DIR / "out"
 
-df = pd.read_csv(OUT_DIR / "testL_processed.csv", encoding='utf-8-sig')
+df = pd.read_csv("02_LO/testL_processed.csv", encoding='utf-8-sig')
 display(df.head(3))
 
 total = df.isnull().sum()
