@@ -17,9 +17,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 
 def main():
     # ====== 設定 ======
-    CSV_PATH = SCRIPT_DIR / "testL_processed2.csv"
+    CSV_PATH = SCRIPT_DIR / "testLO_processed2.csv"
     TARGET = "PRICE_PER_TSUBO"
-    OUTPUT_PATH = SCRIPT_DIR / "testL_processed_forest_result.csv"
+    OUTPUT_PATH = SCRIPT_DIR / "testLO_processed_forest_result.csv"
 
     TEST_SIZE = 0.2
     RANDOM_STATE = 42

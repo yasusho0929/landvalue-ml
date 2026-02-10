@@ -8,9 +8,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = SCRIPT_DIR.parent
 
 # 入力ファイル
-input_path = SCRIPT_DIR / "testL_processed.csv"
-output_path = SCRIPT_DIR / "testL_processed2.csv"
-
+input_path = SCRIPT_DIR / "merged_land_only_processed.csv"
+output_path = SCRIPT_DIR / "testLO_processed.csv"
 # CSV読み込み（文字化け対策：utf-8-sig）
 df = pd.read_csv(input_path, encoding="utf-8-sig")
 
