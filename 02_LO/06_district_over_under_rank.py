@@ -9,7 +9,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 # =========================
 # 設定
 # =========================
-INPUT_CSV = SCRIPT_DIR / "testL_processed_forest_result_labeled.csv"
+INPUT_CSV = SCRIPT_DIR / "testLO_processed_forest_result_labeled.csv"
 MIN_COUNT = 30      # この件数未満の地区は除外
 TOP_N = 20           # 上位何件出すか
 

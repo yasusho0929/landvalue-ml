@@ -1,4 +1,22 @@
-"""このスクリプトは、out配下の学習用CSVでランダムフォレスト回帰を実行し、予測結果CSVをout配下へ保存します。"""
+"""このスクリプトは、学習用CSVでランダムフォレスト回帰を実行し、予測結果CSVを保存します。
+
+実行の前提パス:
+@localhost/public_html/yasusho-topics.com/wp-content/themes/cocoon-child-master/
+
+このファイルを最初に実行したあとに「入力」する内容（ターミナルで順に実行するコマンド）:
+1) まずこのスクリプトを実行
+   python3 02_LO/04_machine_learning_forest.py
+
+2) 予測結果にラベル名を戻す
+   python3 02_LO/05_restore_labels.py
+
+3) 地区ごとの割高/割安ランキングを表示
+   python3 02_LO/06_district_over_under_rank.py
+
+補足:
+- 対話入力（キーボードで値を入れる処理）はありません。
+- 必要に応じて 04 の CSV_PATH を、前段の出力CSV（通常: testLO_processed.csv）に合わせてください。
+"""
 
 
 from pathlib import Path
@@ -39,7 +57,7 @@ def align_features(X: pd.DataFrame, saved_columns: list[str]) -> pd.DataFrame:
 
 def main():
     # ====== 設定 ======
-    CSV_PATH = SCRIPT_DIR / "testLO_processed2.csv"
+    CSV_PATH = SCRIPT_DIR / "testLO_processed.csv"
     TARGET = "PRICE_PER_TSUBO"
     OUTPUT_PATH = SCRIPT_DIR / "testLO_processed_forest_result.csv"
 
