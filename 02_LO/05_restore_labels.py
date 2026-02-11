@@ -15,7 +15,7 @@ INPUT_CSV = SCRIPT_DIR / "testLO_processed_forest_result.csv"
 OUTPUT_CSV = SCRIPT_DIR / "testLO_processed_forest_result_labeled.csv"
 
 PATHS = {
-    "district": ROOT_DIR / "appendix/地区名別_坪単価平均.csv",
+    "district": ROOT_DIR / "appendix/GifuIchiLatLng_deduplicated.csv",
     "station": ROOT_DIR / "appendix/駅の利用者.csv",
     "land_shape": ROOT_DIR / "appendix/土地形状別_坪単価平均.csv",
     "road_type": ROOT_DIR / "appendix/前面道路種類別_坪単価平均.csv",
@@ -38,10 +38,21 @@ df_road_type = pd.read_csv(PATHS["road_type"])
 # （数値 → 名称）
 # =========================
 
-# 地区
-district_rev = dict(
-    zip(df_district["坪単価"], df_district["地区名"])
-)
+# 地区（緯度・経度 -> 大字町丁目名）
+def norm_coord(series):
+    """座標を小数点以下6桁で正規化し、逆引きに使いやすい形にする。"""
+    return pd.to_numeric(series, errors="coerce").round(6)
+
+
+district_lookup = {
+    (lat, lng): name
+    for lat, lng, name in zip(
+        norm_coord(df_district["緯度"]),
+        norm_coord(df_district["経度"]),
+        df_district["大字町丁目名"],
+    )
+    if not np.isnan(lat) and not np.isnan(lng)
+}
 
 # 駅（利用者数 → 駅名）
 station_rev = dict(
@@ -73,7 +84,39 @@ def restore_col(series, rev_map, col_name):
     return restored
 
 
-df["DISTRICT_NAME"] = restore_col(df["DISTRICT"], district_rev, "DISTRICT")
+def detect_lat_lng_columns(frame):
+    """予測結果CSVの緯度経度カラム名を検出する。"""
+    lat_candidates = ["lat", "LAT", "latitude", "LATITUDE", "緯度"]
+    lng_candidates = ["lng", "LNG", "lon", "LON", "longitude", "LONGITUDE", "経度"]
+
+    lat_col = next((c for c in lat_candidates if c in frame.columns), None)
+    lng_col = next((c for c in lng_candidates if c in frame.columns), None)
+
+    return lat_col, lng_col
+
+
+def restore_district_from_coords(frame, lookup):
+    lat_col, lng_col = detect_lat_lng_columns(frame)
+    if lat_col is None or lng_col is None:
+        print("[WARN] DISTRICT: 緯度経度カラムが見つからないため復元をスキップします")
+        return pd.Series([np.nan] * len(frame), index=frame.index)
+
+    lat_vals = norm_coord(frame[lat_col])
+    lng_vals = norm_coord(frame[lng_col])
+
+    restored = pd.Series(
+        [lookup.get((lat, lng)) for lat, lng in zip(lat_vals, lng_vals)],
+        index=frame.index,
+    )
+
+    miss = restored.isna().sum()
+    if miss > 0:
+        print(f"[WARN] DISTRICT: 復元できなかった行数 = {miss}")
+
+    return restored
+
+
+df["DISTRICT_NAME"] = restore_district_from_coords(df, district_lookup)
 df["NEAREST_STATION_NAME"] = restore_col(df["NEAREST_STATION"], station_rev, "NEAREST_STATION")
 df["LAND_SHAPE_NAME"] = restore_col(df["LAND_SHAPE"], land_shape_rev, "LAND_SHAPE")
 df["ROAD_TYPE_NAME"] = restore_col(df["ROAD_TYPE"], road_type_rev, "ROAD_TYPE")
