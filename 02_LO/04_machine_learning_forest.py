@@ -21,6 +21,7 @@
 
 from pathlib import Path
 import json
+import signal
 import time
 import pandas as pd
 import numpy as np
@@ -37,6 +38,12 @@ from sklearn.ensemble import RandomForestRegressor
 SCRIPT_DIR = Path(__file__).resolve().parent
 MODEL_PATH = "./models/rf_landprice.joblib"
 COLUMNS_PATH = "./models/rf_landprice_columns.json"
+SHAP_TIMEOUT_SEC = 5 * 60
+
+
+def _shap_timeout_handler(signum, frame):
+    """SHAP計算のタイムアウト時に送出する。"""
+    raise TimeoutError
 
 
 def align_features(X: pd.DataFrame, saved_columns: list[str]) -> pd.DataFrame:
@@ -193,18 +200,37 @@ def main():
     feature_names = pipe.named_steps["preprocess"].get_feature_names_out()
     print(f"[INFO] SHAP前処理が完了しました（{time.perf_counter() - t0:.1f}秒）")
 
-    print("[INFO] SHAP値の計算を開始します（時間がかかる場合があります）...")
+    print(
+        "[INFO] SHAP値の計算を開始します（時間がかかる場合があります）。"
+        f" {SHAP_TIMEOUT_SEC // 60}分を超えた場合はスキップします..."
+    )
     t0 = time.perf_counter()
-    shap_explainer = shap.TreeExplainer(pipe.named_steps["model"])
-    shap_values = shap_explainer.shap_values(X_test_transformed)
-    print(f"[INFO] SHAP値の計算が完了しました（{time.perf_counter() - t0:.1f}秒）")
+    shap_values = None
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, _shap_timeout_handler)
+    signal.alarm(SHAP_TIMEOUT_SEC)
+    try:
+        shap_explainer = shap.TreeExplainer(pipe.named_steps["model"])
+        shap_values = shap_explainer.shap_values(X_test_transformed)
+    except TimeoutError:
+        elapsed = time.perf_counter() - t0
+        print(
+            "[WARN] SHAP値の計算が5分を超えたためスキップしました。"
+            f"（経過: {elapsed:.1f}秒）"
+        )
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
-    shap_importance = np.abs(shap_values).mean(axis=0)
-    top_idx = np.argsort(shap_importance)[::-1][:10]
+    if shap_values is not None:
+        print(f"[INFO] SHAP値の計算が完了しました（{time.perf_counter() - t0:.1f}秒）")
 
-    print("[INFO] SHAP重要度 TOP10:")
-    for rank, idx in enumerate(top_idx, start=1):
-        print(f"  {rank:>2}. {feature_names[idx]}: {shap_importance[idx]:.6f}")
+        shap_importance = np.abs(shap_values).mean(axis=0)
+        top_idx = np.argsort(shap_importance)[::-1][:10]
+
+        print("[INFO] SHAP重要度 TOP10:")
+        for rank, idx in enumerate(top_idx, start=1):
+            print(f"  {rank:>2}. {feature_names[idx]}: {shap_importance[idx]:.6f}")
 
     # ==========================
     # 全行予測 → 列追加 → 出力
