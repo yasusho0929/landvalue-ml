@@ -103,15 +103,20 @@ road_type_map = dict(zip(
 df["ROAD_TYPE"] = df["ROAD_TYPE"].map(road_type_map)
 
 
-# ③ 地区名 → 坪単価平均
-district_df = pd.read_csv(ROOT_DIR / "appendix/地区名別_坪単価平均.csv", encoding="utf-8-sig")
+# ③ 地区名 → 緯度・経度（lat, lng）
+district_df = pd.read_csv(ROOT_DIR / "appendix/GifuIchiLatLng_deduplicated.csv", encoding="utf-8-sig")
 
-district_map = dict(zip(
-    district_df.iloc[:, 0],
-    district_df.iloc[:, 1]
-))
+# 想定カラム例：
+# 大字町丁目名, 緯度, 経度
+district_lat_lng = district_df[["大字町丁目名", "緯度", "経度"]].copy()
+district_lat_lng = district_lat_lng.rename(columns={
+    "大字町丁目名": "DISTRICT",
+    "緯度": "lat",
+    "経度": "lng",
+})
 
-df["DISTRICT"] = df["DISTRICT"].map(district_map)
+df = df.merge(district_lat_lng, on="DISTRICT", how="left")
+df = df.drop(columns=["DISTRICT"])
 
 
 # ④ 土地の形状 → 坪単価平均
@@ -132,7 +137,8 @@ print("カテゴリ変換後の欠損数:")
 print(df[[
     "NEAREST_STATION",
     "ROAD_TYPE",
-    "DISTRICT",
+    "lat",
+    "lng",
     "LAND_SHAPE"
 ]].isna().sum())
 
