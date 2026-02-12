@@ -182,6 +182,11 @@ def prepare_features(df_raw: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
+    # すべての数値列をfloat64に明示的に変換してpandas.NAを避ける
+    numeric_cols_features = features.select_dtypes(include=["number"]).columns
+    for col in numeric_cols_features:
+        features[col] = features[col].astype("float64")
+
     return features
 
 
