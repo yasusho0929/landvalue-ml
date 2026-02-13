@@ -361,6 +361,8 @@ def predict(
 ) -> tuple[str, str, str]:
     errors: list[str] = []
     warnings: list[str] = []
+    land_total_converted: float | None = None
+    building_total: float | None = None
 
     # 入力有無判定（どちら側を推論するか）
     land_inputs = [
@@ -507,9 +509,10 @@ def predict(
                 try:
                     land_pred = float(RES.land_model.predict(X_land)[0])
                     land_total = land_pred * area / 0.3025
-                    unit_price = land_total / area if area and area > 0 else None
+                    land_total_converted = land_total / 3.3058
+                    unit_price = land_total_converted / area if area and area > 0 else None
                     land_result = (
-                        f"土地予測価格: {format_money(land_total)}\\n"
+                        f"土地予測価格: {format_money(land_total_converted)}\n"
                         f"土地単価(円/㎡): {format_money(unit_price)}"
                     )
                 except Exception as exc:  # noqa: BLE001
@@ -546,10 +549,10 @@ def predict(
                 X_bld = align_input_columns(X_bld, RES.building_columns)
 
                 try:
-                    bld_pred = float(RES.building_model.predict(X_bld)[0])
-                    bld_unit = bld_pred / t_area if t_area and t_area > 0 else None
+                    building_total = float(RES.building_model.predict(X_bld)[0])
+                    bld_unit = building_total / t_area if t_area and t_area > 0 else None
                     building_result = (
-                        f"建物予測価格: {format_money(bld_pred)}\\n"
+                        f"建物予測価格: {format_money(building_total)}\n"
                         f"建物単価(円/㎡): {format_money(bld_unit)}"
                     )
                 except Exception as exc:  # noqa: BLE001
@@ -565,6 +568,10 @@ def predict(
     if warnings:
         message_lines.append("【警告】")
         message_lines.extend(f"- {w}" for w in warnings)
+
+    if land_total_converted is not None and building_total is not None and building_total != 0:
+        ratio = round(land_total_converted / building_total * 100, 2)
+        message_lines.append(f"【土地/建物 比率】 {ratio:.2f}%")
 
     if not message_lines:
         message_lines = ["処理が完了しました。"]
@@ -614,16 +621,16 @@ def build_ui() -> gr.Blocks:
                 gr.Markdown("### 土地入力")
                 district = gr.Dropdown(choices=RES.district_options, label="地区名", allow_custom_value=True)
                 station = gr.Dropdown(choices=RES.station_options, label="NEAREST_STATION", allow_custom_value=True)
-                area = gr.Textbox(label="AREA_SQM")
+                area = gr.Textbox(label="AREA_SQM：土地面積")
                 shape = gr.Dropdown(choices=RES.land_shape_options, label="LAND_SHAPE", allow_custom_value=True)
-                frontage = gr.Textbox(label="FRONTAGE")
+                frontage = gr.Textbox(label="FRONTAGE：間口")
                 direction = gr.Dropdown(choices=RES.direction_options, label="DIRECTION", allow_custom_value=True)
                 road_type = gr.Dropdown(choices=RES.road_type_options, label="ROAD_TYPE", allow_custom_value=True)
-                road_width = gr.Textbox(label="ROAD_WIDTH")
-                bcr = gr.Textbox(label="BUILDING_COVERAGE_RATIO")
-                far = gr.Textbox(label="FLOOR_AREA_RATIO")
+                road_width = gr.Textbox(label="ROAD_WIDTH：道路幅")
+                bcr = gr.Textbox(label="BUILDING_COVERAGE_RATIO：建蔽率")
+                far = gr.Textbox(label="FLOOR_AREA_RATIO：容積率")
                 station_distance = gr.Textbox(label="STATION_DISTANCE_MIN")
-                tx_year = gr.Textbox(label="TRANSACTION_YEAR")
+                tx_year = gr.Textbox(label="TRANSACTION_YEAR：成約年")
 
             with gr.Column():
                 gr.Markdown("### 建物入力")
@@ -633,7 +640,7 @@ def build_ui() -> gr.Blocks:
                 tetsu = gr.Checkbox(label="TETSU")
                 light_tetsu = gr.Checkbox(label="LIGHT_TETSU")
                 blk = gr.Checkbox(label="BLK")
-                total_area = gr.Textbox(label="TotalArea")
+                total_area = gr.Textbox(label="TotalArea：延床面積")
 
         with gr.Row():
             btn_predict = gr.Button("価格表示", variant="primary")
