@@ -358,7 +358,7 @@ def predict(
     light_tetsu: bool,
     blk: bool,
     total_area: str,
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -384,6 +384,9 @@ def predict(
 
     land_result = "土地: 入力なし"
     building_result = "建物: 入力なし"
+    ratio_result = "比率: 算出不可"
+    land_total_value: float | None = None
+    building_total_value: float | None = None
 
     # -----------------
     # 土地予測
@@ -508,8 +511,9 @@ def predict(
                     land_pred = float(RES.land_model.predict(X_land)[0])
                     land_total = land_pred * area / 0.3025
                     unit_price = land_total / area if area and area > 0 else None
+                    land_total_value = land_total
                     land_result = (
-                        f"土地予測価格: {format_money(land_total)}\\n"
+                        f"土地予測価格: {format_money(land_total)}\n"
                         f"土地単価(円/㎡): {format_money(unit_price)}"
                     )
                 except Exception as exc:  # noqa: BLE001
@@ -548,12 +552,17 @@ def predict(
                 try:
                     bld_pred = float(RES.building_model.predict(X_bld)[0])
                     bld_unit = bld_pred / t_area if t_area and t_area > 0 else None
+                    building_total_value = bld_pred
                     building_result = (
-                        f"建物予測価格: {format_money(bld_pred)}\\n"
+                        f"建物予測価格: {format_money(bld_pred)}\n"
                         f"建物単価(円/㎡): {format_money(bld_unit)}"
                     )
                 except Exception as exc:  # noqa: BLE001
                     errors.append(f"建物予測に失敗しました: {exc}")
+
+    if land_total_value is not None and building_total_value not in (None, 0):
+        ratio = round((land_total_value / building_total_value) * 100, 2)
+        ratio_result = f"土地/建物 比率: {ratio:.2f}%"
 
     if not has_land_input and not has_building_input:
         errors.append("土地または建物の入力を行ってください。")
@@ -569,7 +578,7 @@ def predict(
     if not message_lines:
         message_lines = ["処理が完了しました。"]
 
-    return land_result, building_result, "\n".join(message_lines)
+    return land_result, building_result, ratio_result, "\n".join(message_lines)
 
 
 def clear_all() -> tuple[Any, ...]:
@@ -596,6 +605,7 @@ def clear_all() -> tuple[Any, ...]:
         "",  # total area
         "土地: 入力なし",
         "建物: 入力なし",
+        "比率: 算出不可",
         "",
     )
 
@@ -614,16 +624,16 @@ def build_ui() -> gr.Blocks:
                 gr.Markdown("### 土地入力")
                 district = gr.Dropdown(choices=RES.district_options, label="地区名", allow_custom_value=True)
                 station = gr.Dropdown(choices=RES.station_options, label="NEAREST_STATION", allow_custom_value=True)
-                area = gr.Textbox(label="AREA_SQM")
+                area = gr.Textbox(label="土地面積")
                 shape = gr.Dropdown(choices=RES.land_shape_options, label="LAND_SHAPE", allow_custom_value=True)
-                frontage = gr.Textbox(label="FRONTAGE")
+                frontage = gr.Textbox(label="間口")
                 direction = gr.Dropdown(choices=RES.direction_options, label="DIRECTION", allow_custom_value=True)
                 road_type = gr.Dropdown(choices=RES.road_type_options, label="ROAD_TYPE", allow_custom_value=True)
-                road_width = gr.Textbox(label="ROAD_WIDTH")
-                bcr = gr.Textbox(label="BUILDING_COVERAGE_RATIO")
-                far = gr.Textbox(label="FLOOR_AREA_RATIO")
+                road_width = gr.Textbox(label="道路幅")
+                bcr = gr.Textbox(label="建蔽率")
+                far = gr.Textbox(label="容積率")
                 station_distance = gr.Textbox(label="STATION_DISTANCE_MIN")
-                tx_year = gr.Textbox(label="TRANSACTION_YEAR")
+                tx_year = gr.Textbox(label="成約年")
 
             with gr.Column():
                 gr.Markdown("### 建物入力")
@@ -633,7 +643,7 @@ def build_ui() -> gr.Blocks:
                 tetsu = gr.Checkbox(label="TETSU")
                 light_tetsu = gr.Checkbox(label="LIGHT_TETSU")
                 blk = gr.Checkbox(label="BLK")
-                total_area = gr.Textbox(label="TotalArea")
+                total_area = gr.Textbox(label="延床面積")
 
         with gr.Row():
             btn_predict = gr.Button("価格表示", variant="primary")
@@ -642,6 +652,7 @@ def build_ui() -> gr.Blocks:
         with gr.Row():
             land_out = gr.Textbox(label="土地（予測価格・単価）", lines=4)
             bld_out = gr.Textbox(label="建物（予測価格・単価）", lines=4)
+            ratio_out = gr.Textbox(label="土地/建物 比率", lines=1)
         msg_out = gr.Textbox(label="エラー / 注意メッセージ", lines=8)
 
         inputs = [
@@ -665,7 +676,7 @@ def build_ui() -> gr.Blocks:
             blk,
             total_area,
         ]
-        outputs = [land_out, bld_out, msg_out]
+        outputs = [land_out, bld_out, ratio_out, msg_out]
 
         btn_predict.click(fn=predict, inputs=inputs, outputs=outputs)
         btn_clear.click(
