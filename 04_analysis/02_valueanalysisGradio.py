@@ -509,11 +509,14 @@ def predict(
 
                 try:
                     land_pred = float(RES.land_model.predict(X_land)[0])
+                    # モデル出力は「円/坪」。
+                    # UIでは比較しやすいように、円/坪と総額(円)、円/㎡を併記する。
                     land_total = land_pred * area / 0.3025
                     unit_price = land_total / area if area and area > 0 else None
                     land_total_value = land_total
                     land_result = (
-                        f"土地予測価格: {format_money(land_total)}\n"
+                        f"土地予測単価(円/坪): {format_money(land_pred)}\n"
+                        f"土地予測価格(総額): {format_money(land_total)}\n"
                         f"土地単価(円/㎡): {format_money(unit_price)}"
                     )
                 except Exception as exc:  # noqa: BLE001
@@ -624,7 +627,7 @@ def build_ui() -> gr.Blocks:
                 gr.Markdown("### 土地入力")
                 district = gr.Dropdown(choices=RES.district_options, label="地区名", allow_custom_value=True)
                 station = gr.Dropdown(choices=RES.station_options, label="NEAREST_STATION", allow_custom_value=True)
-                area = gr.Textbox(label="土地面積")
+                area = gr.Textbox(label="土地面積（㎡）")
                 shape = gr.Dropdown(choices=RES.land_shape_options, label="LAND_SHAPE", allow_custom_value=True)
                 frontage = gr.Textbox(label="間口")
                 direction = gr.Dropdown(choices=RES.direction_options, label="DIRECTION", allow_custom_value=True)
